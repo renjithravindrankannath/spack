@@ -172,6 +172,7 @@ class PyTorch(PythonPackage, CudaPackage):
         depends_on('rocfft')
         depends_on('rocblas')
         depends_on('miopen-hip')
+        depends_on('rocminfo')
     # https://github.com/pytorch/pytorch/issues/60332
     # depends_on('xnnpack@2021-02-22', when='@1.8:+xnnpack')
     # depends_on('xnnpack@2020-03-23', when='@1.6:1.7+xnnpack')
@@ -227,6 +228,7 @@ class PyTorch(PythonPackage, CudaPackage):
     # Fixes 'FindOpenMP.cmake'
     # to detect openmp settings used by Fujitsu compiler.
     patch('detect_omp_of_fujitsu_compiler.patch', when='%fj')
+    patch('py-torch-rocm-003.patch', when='+rocm')
 
     # Fixes to build with fujitsu-ssl2
     patch('fj-ssl2_1.11.patch', when='@1.11:^fujitsu-ssl2')
@@ -362,6 +364,9 @@ class PyTorch(PythonPackage, CudaPackage):
             env.set('HIPCUB_PATH', self.spec['hipcub'].prefix)
             env.set('ROCTHRUST_PATH', self.spec['rocthrust'].prefix)
             env.set('ROCTRACER_PATH', self.spec['roctracer-dev'].prefix)
+            env.set('RCCL_INCLUDE_DIR', self.spec['rccl'].prefix.include)
+            env.set('USE_NCCL', 'ON')
+            env.set('USE_PTHREADPOOL', 'ON')
 
         enable_or_disable('cudnn')
         if '+cudnn' in self.spec:
