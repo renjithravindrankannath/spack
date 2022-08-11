@@ -194,6 +194,7 @@ class PyTorch(PythonPackage, CudaPackage):
         depends_on("rocfft")
         depends_on("rocblas")
         depends_on("miopen-hip")
+        depends_on("rocminfo")
     # https://github.com/pytorch/pytorch/issues/60332
     # depends_on('xnnpack@2022-02-16', when='@1.12:+xnnpack')
     # depends_on('xnnpack@2021-06-21', when='@1.10:1.11+xnnpack')
@@ -270,6 +271,7 @@ class PyTorch(PythonPackage, CudaPackage):
     patch("fj-ssl2_1.6-1.7.patch", when="@1.6:1.7^fujitsu-ssl2")
     patch("fj-ssl2_1.3-1.5.patch", when="@1.3:1.5^fujitsu-ssl2")
     patch("fj-ssl2_1.2.patch", when="@1.2^fujitsu-ssl2")
+    patch("py-torch-rocm-003.patch", when="+rocm")
 
     # Fix compilation of +distributed~tensorpipe
     # https://github.com/pytorch/pytorch/issues/68002
@@ -436,6 +438,11 @@ class PyTorch(PythonPackage, CudaPackage):
             env.set("HIPCUB_PATH", self.spec["hipcub"].prefix)
             env.set("ROCTHRUST_PATH", self.spec["rocthrust"].prefix)
             env.set("ROCTRACER_PATH", self.spec["roctracer-dev"].prefix)
+            env.set("RCCL_INCLUDE_DIR", self.spec["rccl"].prefix.include)
+            env.set("USE_NCCL", True)
+            env.set("USE_PTHREADPOOL", True)
+            if self.spec.satisfies("^hip@5.2.0:"):
+                env.set("CMAKE_MODULE_PATH", self.spec["hip"].prefix.lib.cmake.hip)
 
         enable_or_disable("cudnn")
         if "+cudnn" in self.spec:
