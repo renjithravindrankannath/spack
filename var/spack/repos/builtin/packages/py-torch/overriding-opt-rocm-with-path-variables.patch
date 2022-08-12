@@ -1,18 +1,20 @@
-From b0fa3259cb115d29240ced8e3db84b4fa9f1a3f5 Mon Sep 17 00:00:00 2001
+From 459ffa95d2a14680a31b240ed8425c4083e7fdfb Mon Sep 17 00:00:00 2001
 From: Renjith Ravindran <Renjith.RavindranKannath@amd.com>
-Date: Thu, 11 Aug 2022 22:45:00 +0000
-Subject: [PATCH] Patch to override the /opt/rocm/ path
+Date: Fri, 12 Aug 2022 06:19:10 +0000
+Subject: [PATCH] Setting path variables instead of hardcodcing /opt/rocm
 
 ---
- caffe2/CMakeLists.txt                       | 20 +++++++++++++++++
- cmake/Dependencies.cmake                    |  1 +
- cmake/public/LoadHIP.cmake                  | 24 ++++++++++-----------
- modules/detectron/CMakeLists.txt            |  7 ++++++
- third_party/kineto/libkineto/CMakeLists.txt |  2 +-
- 5 files changed, 41 insertions(+), 13 deletions(-)
+ caffe2/CMakeLists.txt                         | 20 +++++++++++++++++++
+ cmake/Dependencies.cmake                      |  3 ++-
+ cmake/External/rccl.cmake                     |  2 +-
+ modules/detectron/CMakeLists.txt              |  7 +++++++
+ third_party/gloo/cmake/Dependencies.cmake     |  2 +-
+ third_party/gloo/cmake/Modules/Findrccl.cmake |  8 ++++----
+ third_party/kineto/libkineto/CMakeLists.txt   |  2 +-
+ 7 files changed, 36 insertions(+), 8 deletions(-)
 
 diff --git a/caffe2/CMakeLists.txt b/caffe2/CMakeLists.txt
-index d57d7ebb..4f57c2b4 100644
+index d57d7ebb..35b6cfd0 100644
 --- a/caffe2/CMakeLists.txt
 +++ b/caffe2/CMakeLists.txt
 @@ -1249,6 +1249,12 @@ if(USE_ROCM)
@@ -23,7 +25,7 @@ index d57d7ebb..4f57c2b4 100644
 +    ${ROCRAND_PATH}/rocrand/include
 +    ${HIPCUB_PATH}/include
 +    ${HIPFFT_PATH}/hipfft/include
-+    ${RCCL_INCLUDE_DIR}
++    ${RCCL_PATH}/include
 +    ${ROCRAND_PATH}
      )
  endif()
@@ -37,7 +39,7 @@ index d57d7ebb..4f57c2b4 100644
 +      ${ROCRAND_PATH}/rocrand/include
 +      ${HIPCUB_PATH}/include
 +      ${HIPFFT_PATH}/hipfft/include
-+      ${RCCL_INCLUDE_DIR}
++      ${RCCL_PATH}/include
 +      ${ROCRAND_PATH})
  
    target_link_libraries(
@@ -51,58 +53,38 @@ index d57d7ebb..4f57c2b4 100644
 +                              ${ROCRAND_PATH}/rocrand/include
 +                              ${HIPCUB_PATH}/include
 +                              ${HIPFFT_PATH}/hipfft/include
-+                              ${RCCL_INCLUDE_DIR}
++			      ${RCCL_PATH}/include
 +                              ${ROCRAND_PATH})
      target_link_libraries(caffe2_pybind11_state_hip torch_library)
      if(WIN32)
        target_link_libraries(caffe2_pybind11_state_hip ${PYTHON_LIBRARIES})
 diff --git a/cmake/Dependencies.cmake b/cmake/Dependencies.cmake
-index 557ab649..10a9b5f4 100644
+index 557ab649..cb9b84ea 100644
 --- a/cmake/Dependencies.cmake
 +++ b/cmake/Dependencies.cmake
-@@ -1319,6 +1319,7 @@ if(USE_ROCM)
+@@ -1318,7 +1318,8 @@ if(USE_ROCM)
+   include_directories(SYSTEM ${HIPSPARSE_PATH}/include)
    include_directories(SYSTEM ${HIPRAND_PATH}/include)
    include_directories(SYSTEM ${ROCRAND_PATH}/include)
-   include_directories(SYSTEM ${THRUST_PATH})
-+  include_directories(SYSTEM ${RCCL_INCLUDE_DIR})
+-  include_directories(SYSTEM ${THRUST_PATH})
++  include_directories(SYSTEM ${ROCTHRUST_PATH}/include)
++  include_directories(SYSTEM ${RCCL_PATH}/include)
  endif()
  
  # ---[ NCCL
-diff --git a/cmake/public/LoadHIP.cmake b/cmake/public/LoadHIP.cmake
-index fa481dda..d59c8052 100644
---- a/cmake/public/LoadHIP.cmake
-+++ b/cmake/public/LoadHIP.cmake
-@@ -149,18 +149,18 @@ find_package_and_print_version(HIP 1.0)
- 
- if(HIP_FOUND)
-   set(PYTORCH_FOUND_HIP TRUE)
--
--  # Find ROCM version for checks
--  file(READ "${ROCM_PATH}/.info/version-dev" ROCM_VERSION_DEV_RAW)
--  string(REGEX MATCH "^([0-9]+)\.([0-9]+)\.([0-9]+)-.*$" ROCM_VERSION_DEV_MATCH ${ROCM_VERSION_DEV_RAW})
--  if(ROCM_VERSION_DEV_MATCH)
--    set(ROCM_VERSION_DEV_MAJOR ${CMAKE_MATCH_1})
--    set(ROCM_VERSION_DEV_MINOR ${CMAKE_MATCH_2})
--    set(ROCM_VERSION_DEV_PATCH ${CMAKE_MATCH_3})
--    set(ROCM_VERSION_DEV "${ROCM_VERSION_DEV_MAJOR}.${ROCM_VERSION_DEV_MINOR}.${ROCM_VERSION_DEV_PATCH}")
--    math(EXPR ROCM_VERSION_DEV_INT "(${ROCM_VERSION_DEV_MAJOR}*10000) + (${ROCM_VERSION_DEV_MINOR}*100) + ${ROCM_VERSION_DEV_PATCH}")
--  endif()
--  message("\n***** ROCm version from ${ROCM_PATH}/.info/version-dev ****\n")
-+   # Find ROCM version for checks
-+  file(READ "${ROCM_PATH}/include/hip/hip_version.h" ROCM_VERSION_DEV_RAW)
-+  string(REGEX MATCH "VERSION_MAJOR ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
-+  set(ROCM_VERSION_DEV_MAJOR ${CMAKE_MATCH_1})
-+  string(REGEX MATCH "VERSION_MINOR ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
-+  set(ROCM_VERSION_DEV_MINOR ${CMAKE_MATCH_1})
-+  string(REGEX MATCH "VERSION_PATCH ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
-+  #set(ROCM_VERSION_DEV_PATCH ${CMAKE_MATCH_1})
-+  set(ROCM_VERSION_DEV_PATCH 0)
-+  set(ROCM_VERSION_DEV "${ROCM_VERSION_DEV_MAJOR}.${ROCM_VERSION_DEV_MINOR}.${ROCM_VERSION_DEV_PATCH}")
-+  math(EXPR ROCM_VERSION_DEV_INT "(${ROCM_VERSION_DEV_MAJOR}*10000) + (${ROCM_VERSION_DEV_MINOR}*100) + ${ROCM_VERSION_DEV_PATCH}")
-+  message("\n***** ROCm version from ${ROCM_PATH}/include/hip/hip_version.h ****\n")
-   message("ROCM_VERSION_DEV: ${ROCM_VERSION_DEV}")
-   message("ROCM_VERSION_DEV_MAJOR: ${ROCM_VERSION_DEV_MAJOR}")
-   message("ROCM_VERSION_DEV_MINOR: ${ROCM_VERSION_DEV_MINOR}")
+diff --git a/cmake/External/rccl.cmake b/cmake/External/rccl.cmake
+index 911c80f3..0fd2ce70 100644
+--- a/cmake/External/rccl.cmake
++++ b/cmake/External/rccl.cmake
+@@ -8,7 +8,7 @@ if(NOT __NCCL_INCLUDED)
+       message(STATUS "RCCL Found!")
+       add_library(__caffe2_nccl INTERFACE)
+       target_link_libraries(__caffe2_nccl INTERFACE ${PYTORCH_RCCL_LIBRARIES})
+-      target_include_directories(__caffe2_nccl INTERFACE ${RCCL_INCLUDE_DIRS})
++      target_include_directories(__caffe2_nccl INTERFACE ${RCCL_PATH}/include)
+     else()
+       message(STATUS "RCCL NOT Found!")
+     endif()
 diff --git a/modules/detectron/CMakeLists.txt b/modules/detectron/CMakeLists.txt
 index bffc074e..f7d19e5f 100644
 --- a/modules/detectron/CMakeLists.txt
@@ -121,6 +103,52 @@ index bffc074e..f7d19e5f 100644
      install(TARGETS caffe2_detectron_ops_hip DESTINATION lib)
    elseif(NOT IOS_PLATFORM)
      add_library(caffe2_detectron_ops SHARED ${Detectron_CPU_SRCS})
+diff --git a/third_party/gloo/cmake/Dependencies.cmake b/third_party/gloo/cmake/Dependencies.cmake
+index 2e200e6b..60addbab 100644
+--- a/third_party/gloo/cmake/Dependencies.cmake
++++ b/third_party/gloo/cmake/Dependencies.cmake
+@@ -180,7 +180,7 @@ endif()
+ if(USE_ROCM AND USE_RCCL)
+   find_package(rccl)
+   if(RCCL_FOUND)
+-    include_directories(SYSTEM ${RCCL_INCLUDE_DIRS})
++    include_directories(SYSTEM ${RCCL_PATH}/include)
+     list(APPEND gloo_hip_DEPENDENCY_LIBS ${RCCL_LIBRARIES} dl rt)
+   else()
+     message(WARNING "Not compiling with RCCL support. Suppress this warning with -DUSE_RCCL=OFF.")
+diff --git a/third_party/gloo/cmake/Modules/Findrccl.cmake b/third_party/gloo/cmake/Modules/Findrccl.cmake
+index 008d23a7..a6bdf5c7 100644
+--- a/third_party/gloo/cmake/Modules/Findrccl.cmake
++++ b/third_party/gloo/cmake/Modules/Findrccl.cmake
+@@ -23,7 +23,7 @@ endif()
+ find_path(RCCL_INCLUDE_DIR
+   NAMES rccl.h
+   HINTS
+-  ${RCCL_INCLUDE_DIR}
++  ${RCCL_PATH}/include
+   ${RCCL_ROOT_DIR}/include)
+ 
+ if ($ENV{USE_STATIC_RCCL})
+@@ -43,7 +43,7 @@ include(FindPackageHandleStandardArgs)
+ find_package_handle_standard_args(RCCL DEFAULT_MSG RCCL_INCLUDE_DIR RCCL_LIBRARY)
+ 
+ if (RCCL_FOUND)
+-  set(RCCL_HEADER_FILE "${RCCL_INCLUDE_DIR}/rccl.h")
++  set(RCCL_HEADER_FILE "${RCCL_PATH}/include/rccl.h")
+   message(STATUS "Determining RCCL version from the header file: ${RCCL_HEADER_FILE}")
+   file (STRINGS ${RCCL_HEADER_FILE} RCCL_MAJOR_VERSION_DEFINED
+         REGEX "^[ \t]*#define[ \t]+RCCL_MAJOR[ \t]+[0-9]+.*$" LIMIT_COUNT 1)
+@@ -52,8 +52,8 @@ if (RCCL_FOUND)
+             RCCL_MAJOR_VERSION ${RCCL_MAJOR_VERSION_DEFINED})
+     message(STATUS "RCCL_MAJOR_VERSION: ${RCCL_MAJOR_VERSION}")
+   endif()
+-  set(RCCL_INCLUDE_DIRS ${RCCL_INCLUDE_DIR})
++  set(RCCL_INCLUDE_DIRS ${RCCL_PATH}/include)
+   set(RCCL_LIBRARIES ${RCCL_LIBRARY})
+-  message(STATUS "Found RCCL (include: ${RCCL_INCLUDE_DIRS}, library: ${RCCL_LIBRARIES})")
++  message(STATUS "Found RCCL (include: ${RCCL_PATH}/include, library: ${RCCL_LIBRARIES})")
+   mark_as_advanced(RCCL_ROOT_DIR RCCL_INCLUDE_DIRS RCCL_LIBRARIES)
+ endif()
 diff --git a/third_party/kineto/libkineto/CMakeLists.txt b/third_party/kineto/libkineto/CMakeLists.txt
 index 854245ab..3545b0e1 100644
 --- a/third_party/kineto/libkineto/CMakeLists.txt
@@ -135,5 +163,5 @@ index 854245ab..3545b0e1 100644
  if (NOT ROCM_INCLUDE_DIRS)
      set(ROCM_INCLUDE_DIRS "${ROCM_SOURCE_DIR}/include")
 -- 
-2.25.1
+2.37.0
 

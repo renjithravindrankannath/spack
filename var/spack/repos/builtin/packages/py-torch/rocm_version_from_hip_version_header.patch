@@ -1,0 +1,47 @@
+From 479b40b05cce6e206037e1f1763a89e528ca6bd8 Mon Sep 17 00:00:00 2001
+From: Renjith Ravindran <Renjith.RavindranKannath@amd.com>
+Date: Fri, 12 Aug 2022 06:13:40 +0000
+Subject: [PATCH] Find Rocm version from hip header
+
+---
+ cmake/public/LoadHIP.cmake | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/cmake/public/LoadHIP.cmake b/cmake/public/LoadHIP.cmake
+index fa481dda..d59c8052 100644
+--- a/cmake/public/LoadHIP.cmake
++++ b/cmake/public/LoadHIP.cmake
+@@ -149,18 +149,18 @@ find_package_and_print_version(HIP 1.0)
+ 
+ if(HIP_FOUND)
+   set(PYTORCH_FOUND_HIP TRUE)
+-
+-  # Find ROCM version for checks
+-  file(READ "${ROCM_PATH}/.info/version-dev" ROCM_VERSION_DEV_RAW)
+-  string(REGEX MATCH "^([0-9]+)\.([0-9]+)\.([0-9]+)-.*$" ROCM_VERSION_DEV_MATCH ${ROCM_VERSION_DEV_RAW})
+-  if(ROCM_VERSION_DEV_MATCH)
+-    set(ROCM_VERSION_DEV_MAJOR ${CMAKE_MATCH_1})
+-    set(ROCM_VERSION_DEV_MINOR ${CMAKE_MATCH_2})
+-    set(ROCM_VERSION_DEV_PATCH ${CMAKE_MATCH_3})
+-    set(ROCM_VERSION_DEV "${ROCM_VERSION_DEV_MAJOR}.${ROCM_VERSION_DEV_MINOR}.${ROCM_VERSION_DEV_PATCH}")
+-    math(EXPR ROCM_VERSION_DEV_INT "(${ROCM_VERSION_DEV_MAJOR}*10000) + (${ROCM_VERSION_DEV_MINOR}*100) + ${ROCM_VERSION_DEV_PATCH}")
+-  endif()
+-  message("\n***** ROCm version from ${ROCM_PATH}/.info/version-dev ****\n")
++   # Find ROCM version for checks
++  file(READ "${ROCM_PATH}/include/hip/hip_version.h" ROCM_VERSION_DEV_RAW)
++  string(REGEX MATCH "VERSION_MAJOR ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
++  set(ROCM_VERSION_DEV_MAJOR ${CMAKE_MATCH_1})
++  string(REGEX MATCH "VERSION_MINOR ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
++  set(ROCM_VERSION_DEV_MINOR ${CMAKE_MATCH_1})
++  string(REGEX MATCH "VERSION_PATCH ([0-9]*)" _ ${ROCM_VERSION_DEV_RAW})
++  #set(ROCM_VERSION_DEV_PATCH ${CMAKE_MATCH_1})
++  set(ROCM_VERSION_DEV_PATCH 0)
++  set(ROCM_VERSION_DEV "${ROCM_VERSION_DEV_MAJOR}.${ROCM_VERSION_DEV_MINOR}.${ROCM_VERSION_DEV_PATCH}")
++  math(EXPR ROCM_VERSION_DEV_INT "(${ROCM_VERSION_DEV_MAJOR}*10000) + (${ROCM_VERSION_DEV_MINOR}*100) + ${ROCM_VERSION_DEV_PATCH}")
++  message("\n***** ROCm version from ${ROCM_PATH}/include/hip/hip_version.h ****\n")
+   message("ROCM_VERSION_DEV: ${ROCM_VERSION_DEV}")
+   message("ROCM_VERSION_DEV_MAJOR: ${ROCM_VERSION_DEV_MAJOR}")
+   message("ROCM_VERSION_DEV_MINOR: ${ROCM_VERSION_DEV_MINOR}")
+-- 
+2.37.0
+

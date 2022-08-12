@@ -271,7 +271,8 @@ class PyTorch(PythonPackage, CudaPackage):
     patch("fj-ssl2_1.6-1.7.patch", when="@1.6:1.7^fujitsu-ssl2")
     patch("fj-ssl2_1.3-1.5.patch", when="@1.3:1.5^fujitsu-ssl2")
     patch("fj-ssl2_1.2.patch", when="@1.2^fujitsu-ssl2")
-    patch("py-torch-rocm-003.patch", when="+rocm")
+    patch("rocm_version_from_hip_version_header.patch", when="+rocm")
+    patch("overriding-opt-rocm-with-path-variables.patch", when="+rocm")
 
     # Fix compilation of +distributed~tensorpipe
     # https://github.com/pytorch/pytorch/issues/68002
@@ -428,7 +429,6 @@ class PyTorch(PythonPackage, CudaPackage):
             env.set("ROCFFT_PATH", self.spec["rocfft"].prefix)
             env.set("HIPFFT_PATH", self.spec["hipfft"].prefix)
             env.set("HIPSPARSE_PATH", self.spec["hipsparse"].prefix)
-            env.set("THRUST_PATH", self.spec["rocthrust"].prefix.include)
             env.set("HIP_PATH", self.spec["hip"].prefix)
             env.set("HIPRAND_PATH", self.spec["rocrand"].prefix)
             env.set("ROCRAND_PATH", self.spec["rocrand"].prefix)
@@ -438,7 +438,6 @@ class PyTorch(PythonPackage, CudaPackage):
             env.set("HIPCUB_PATH", self.spec["hipcub"].prefix)
             env.set("ROCTHRUST_PATH", self.spec["rocthrust"].prefix)
             env.set("ROCTRACER_PATH", self.spec["roctracer-dev"].prefix)
-            env.set("RCCL_INCLUDE_DIR", self.spec["rccl"].prefix.include)
             env.set("USE_NCCL", True)
             env.set("USE_PTHREADPOOL", True)
             if self.spec.satisfies("^hip@5.2.0:"):
