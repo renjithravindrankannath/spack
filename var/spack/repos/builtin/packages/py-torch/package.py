@@ -10,7 +10,7 @@ from spack.operating_systems.mac_os import macos_version
 from spack.package import *
 
 
-class PyTorch(PythonPackage, CudaPackage):
+class PyTorch(PythonPackage, CudaPackage, ROCmPackage):
     """Tensors and Dynamic neural networks in Python
     with strong GPU acceleration."""
 
@@ -182,8 +182,6 @@ class PyTorch(PythonPackage, CudaPackage):
     depends_on("llvm-openmp", when="%apple-clang +openmp")
     depends_on("valgrind", when="+valgrind")
     with when("+rocm"):
-        depends_on("hsa-rocr-dev")
-        depends_on("hip")
         depends_on("rccl")
         depends_on("rocprim")
         depends_on("hipcub")
