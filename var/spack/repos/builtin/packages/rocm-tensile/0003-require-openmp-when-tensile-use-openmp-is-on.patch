@@ -1,0 +1,32 @@
+From 18168ae2ab98bb470566f2ffc24b7df95a876516 Mon Sep 17 00:00:00 2001
+From: Renjith Ravindran <Renjith.RavindranKannath@amd.com>
+Date: Mon, 3 Oct 2022 23:14:58 -0700
+Subject: [PATCH] 0003-require-openmp-when-tensile-use-openmp-is-on
+
+---
+ Tensile/Source/CMakeLists.txt | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/Tensile/Source/CMakeLists.txt b/Tensile/Source/CMakeLists.txt
+index 7d7e6c4..1be65eb 100644
+--- a/Tensile/Source/CMakeLists.txt
++++ b/Tensile/Source/CMakeLists.txt
+@@ -64,14 +64,7 @@ if(TENSILE_USE_OPENMP)
+     # Workaround for https://gitlab.kitware.com/cmake/cmake/-/issues/21787
+     # ensures we link to HIP's libomp and get an rpath to it.
+     add_library(custom_openmp_cxx INTERFACE)
+-
+-    if(TENSILE_USE_HIP)
+-        target_compile_options(custom_openmp_cxx INTERFACE "-fopenmp")
+-        target_link_options(custom_openmp_cxx INTERFACE "-fopenmp")
+-    else ()
+-        find_package(OpenMP REQUIRED)
+-        target_link_libraries(custom_openmp_cxx INTERFACE OpenMP::OpenMP_CXX)
+-    endif ()
++    target_link_libraries(custom_openmp_cxx INTERFACE ${ROCM_OPENMP_EXTRAS_PATH}/lib/libomp.so)
+ endif()
+ 
+ add_subdirectory(lib)
+-- 
+2.25.1
+

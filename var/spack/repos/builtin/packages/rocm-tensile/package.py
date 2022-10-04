@@ -133,7 +133,7 @@ class RocmTensile(CMakePackage):
         depends_on("rocm-cmake@" + ver, type="build", when="@" + ver)
         depends_on("hip@" + ver, when="@" + ver)
         depends_on("comgr@" + ver, when="@" + ver)
-        depends_on("llvm-amdgpu@" + ver, when="@" + ver + "+openmp")
+        depends_on("rocm-openmp-extras@" + ver, when="@" + ver + "+openmp")
         depends_on("llvm-amdgpu@" + ver + "~openmp", when="@" + ver + "~openmp")
         depends_on("rocminfo@" + ver, type="build", when="@" + ver)
 
@@ -163,6 +163,7 @@ class RocmTensile(CMakePackage):
     # Not yet landed in 3.7.0, nor 3.8.0.
     patch("0001-fix-compile-error.patch", when="@3.7.0:3.8.0")
     patch("0002-require-openmp-when-tensile-use-openmp-is-on.patch", when="@3.9.0:4.0.0")
+    patch("0003-require-openmp-when-tensile-use-openmp-is-on.patch", when="@5.2.0:")
 
     def setup_build_environment(self, env):
         env.set("CXX", self.spec["hip"].hipcc)
@@ -184,6 +185,7 @@ class RocmTensile(CMakePackage):
         args = [
             self.define("amd_comgr_DIR", self.spec["comgr"].prefix),
             self.define("Tensile_COMPILER", "hipcc"),
+            self.define("ROCM_OPENMP_EXTRAS_PATH", self.spec["rocm-openmp-extras"].prefix),
             self.define("Tensile_LOGIC", "asm_full"),
             self.define("Tensile_CODE_OBJECT_VERSION", "V3"),
             self.define("Boost_USE_STATIC_LIBS", "OFF"),
