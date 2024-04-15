@@ -127,6 +127,9 @@ class RocmOpencl(CMakePackage):
     for ver in ["5.5.0", "5.5.1", "5.6.0", "5.6.1", "5.7.0", "5.7.1", "6.0.0", "6.0.2"]:
         depends_on(f"rocm-core@{ver}", when=f"@{ver}")
 
+    for ver in ["6.0.0", "6.0.2"]:
+        depends_on(f"aqlprofile@{ver}", when=f"@{ver}")
+
     @classmethod
     def determine_version(cls, lib):
         match = re.search(r"lib\S*\.so\.\d+\.\d+\.(\d)(\d\d)(\d\d)", lib)
